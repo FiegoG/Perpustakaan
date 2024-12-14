@@ -17,6 +17,11 @@ class PeminjamanService implements HasMiddleware
         ];
     }
 
+    public function index()
+    {
+        return Peminjaman::all();
+    }
+
     public function create(Request $request)
     {
         $fields = $request->validate([
@@ -52,5 +57,10 @@ class PeminjamanService implements HasMiddleware
         $peminjaman->delete();
 
         return ['message' => 'Peminjaman berhasil dihapus'];
+    }
+
+    public function show(Peminjaman $peminjaman)
+    {
+        return $peminjaman; 
     }
 }

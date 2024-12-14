@@ -3,8 +3,6 @@
     <div class="header">
       <div class="menu">
         <div class="menu-icon"></div>
-        <div class="menu-icon"></div>
-        <div class="menu-icon"></div>
       </div>
       <span>Sistem Informasi Perpustakaan Berbasis Web</span>
     </div>
@@ -57,7 +55,7 @@
             <input type="date" id="tglPeminjaman" v-model="newData.tglPeminjaman" required />
           </div>
           <div class="form-actions">
-            <button type="submit">Simpan</button>
+            <button type="submit" @click="updateData">Simpan</button>
             <button type="button" @click="cancelForm">Batal</button>
           </div>
         </form>
@@ -67,14 +65,12 @@
 </template>
 
 <script>
+import axios from "axios";
 export default {
   data() {
     return {
       searchQuery: '',
-      data: [
-        { buku: 'Buku 1', peminjam: 'Peminjam 1', tglPeminjaman: '2024-01-01' },
-        { buku: 'Buku 2', peminjam: 'Peminjam 2', tglPeminjaman: '2024-01-02' },
-      ],
+      data: [],
       showAddForm: false,
       showEditForm: false,
       currentEditIndex: null,
@@ -87,30 +83,50 @@ export default {
   },
   computed: {
     filteredData() {
-      return this.data.filter(item => 
+      return this.data.filter(item =>
         item.buku.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
         item.peminjam.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
-    },
+    }
   },
   methods: {
-    editData(index) {
-      this.currentEditIndex = index;
-      this.newData = { ...this.data[index] };
-      this.showEditForm = true;
-    },
-    deleteData(index) {
-      if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-        this.data.splice(index, 1);
+    async fetchData() {
+      try {
+        const response = await PeminjamanService.getAll();
+        this.data = response.data;
+      } catch (error) {
+        console.error('Error fetching data:', error);
       }
     },
-    submitData() {
-      this.data.push({ ...this.newData });
-      this.resetForm();
+    async submitData() {
+      try {
+        await PeminjamanService.create(this.newData);
+        this.fetchData(); // Refresh data setelah menambah
+        this.resetForm();
+      } catch (error) {
+        console.error('Error adding data:', error);
+      }
     },
-    updateData() {
-      this.$set(this.data, this.currentEditIndex, { ...this.newData });
-      this.resetForm();
+    async updateData() {
+      try {
+        const id = this.data[this.currentEditIndex].id;
+        await PeminjamanService.update(id, this.newData);
+        this.fetchData(); // Refresh data setelah mengedit
+        this.resetForm();
+      } catch (error) {
+        console.error('Error updating data:', error);
+      }
+    },
+    async deleteData(index) {
+      if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+        try {
+          const id = this.data[index].id;
+          await PeminjamanService.delete(id);
+          this.fetchData(); // Refresh data setelah menghapus
+        } catch (error) {
+          console.error('Error deleting data:', error);
+        }
+      }
     },
     cancelForm() {
       this.resetForm();
@@ -126,6 +142,9 @@ export default {
       this.currentEditIndex = null;
     }
   },
+  mounted() {
+    this.fetchData(); // Ambil data saat komponen dimuat
+  }
 };
 </script>
 
