@@ -1,70 +1,64 @@
 <template>
   <div>
-    <h2 class="text-2xl font-bold mb-4">Peminjaman Buku</h2>
-
-    <!-- Form pencarian dan tambah data -->
-    <div class="mb-4 flex justify-between">
-      <button @click="showAddForm = true" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-        + Tambah Data
-      </button>
-      <input
-        type="text"
-        v-model="searchQuery"
-        placeholder="Search..."
-        class="border px-3 py-2 rounded w-1/3"
-        @input="searchData"
-      />
+    <div class="header">
+      <div class="menu">
+        <div class="menu-icon"></div>
+        <div class="menu-icon"></div>
+        <div class="menu-icon"></div>
+      </div>
+      <span>Sistem Informasi Perpustakaan Berbasis Web</span>
     </div>
+    <div class="content">
+      <div class="table-container">
+        <h1>Peminjaman Buku</h1>
+        <div class="controls">
+          <button class="tambah-button" @click="showAddForm = true">+ Tambah Data</button>
+          <input type="text" placeholder="Search..." v-model="searchQuery">
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Buku</th>
+              <th>Peminjam</th>
+              <th>Tgl Peminjaman</th>
+              <th>Kelola</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in filteredData" :key="index">
+              <td>{{ index + 1 }}</td>
+              <td>{{ item.buku }}</td>
+              <td>{{ item.peminjam }}</td>
+              <td>{{ item.tglPeminjaman }}</td>
+              <td>
+                <button class="edit-button" @click="editData(index)">Edit</button>
+                <button class="hapus-button" @click="deleteData(index)">Hapus</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-    <!-- Tabel Data -->
-    <table class="w-full bg-white border-collapse border border-gray-300">
-      <thead>
-        <tr class="bg-gray-200 text-left">
-          <th class="border border-gray-300 px-4 py-2">No</th>
-          <th class="border border-gray-300 px-4 py-2">Buku</th>
-          <th class="border border-gray-300 px-4 py-2">Peminjam</th>
-          <th class="border border-gray-300 px-4 py-2">Tgl Peminjaman</th>
-          <th class="border border-gray-300 px-4 py-2">Kelola</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(item, index) in filteredData" :key="item.id">
-          <td class="border border-gray-300 px-4 py-2 text-center">{{ index + 1 }}</td>
-          <td class="border border-gray-300 px-4 py-2">{{ item.buku }}</td>
-          <td class="border border-gray-300 px-4 py-2">{{ item.peminjam }}</td>
-          <td class="border border-gray-300 px-4 py-2">{{ item.tanggal_peminjaman }}</td>
-          <td class="border border-gray-300 px-4 py-2">
-            <button @click="editData(item)" class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">Edit</button>
-            <button @click="deleteData(item.id)" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- Modal Tambah Data -->
-    <div v-if="showAddForm" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
-      <div class="bg-white p-6 rounded">
-        <h3 class="text-xl font-bold mb-4">Tambah Data</h3>
-        <form @submit.prevent="addData">
-          <div class="mb-4">
-            <label class="block font-bold mb-2">Buku:</label>
-            <input v-model="newData.buku" type="text" class="border px-3 py-2 rounded w-full" required />
+      <div v-if="showAddForm || showEditForm" class="add-form">
+        <h2 v-if="showAddForm">Tambah Data</h2>
+        <h2 v-if="showEditForm">Edit Data</h2>
+        <form @submit.prevent="showAddForm ? submitData() : updateData()">
+          <div>
+            <label for="buku">Buku:</label>
+            <input type="text" id="buku" v-model="newData.buku" required />
           </div>
-          <div class="mb-4">
-            <label class="block font-bold mb-2">Peminjam:</label>
-            <input v-model="newData.peminjam" type="text" class="border px-3 py-2 rounded w-full" required />
+          <div>
+            <label for="peminjam">Peminjam:</label>
+            <input type="text" id="peminjam" v-model="newData.peminjam" required />
           </div>
-          <div class="mb-4">
-            <label class="block font-bold mb-2">Tanggal Peminjaman:</label>
-            <input v-model="newData.tanggal_peminjaman" type="date" class="border px-3 py-2 rounded w-full" required />
+          <div>
+            <label for="tglPeminjaman">Tanggal Peminjaman:</label>
+            <input type="date" id="tglPeminjaman" v-model="newData.tglPeminjaman" required />
           </div>
-          <div class="flex justify-end">
-            <button type="button" @click="showAddForm = false" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 mr-2">
-              Cancel
-            </button>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-              Submit
-            </button>
+          <div class="form-actions">
+            <button type="submit">Simpan</button>
+            <button type="button" @click="cancelForm">Batal</button>
           </div>
         </form>
       </div>
@@ -73,62 +67,187 @@
 </template>
 
 <script>
-import axios from 'axios';
-
 export default {
   data() {
     return {
-      dataPeminjaman: [],
       searchQuery: '',
+      data: [
+        { buku: 'Buku 1', peminjam: 'Peminjam 1', tglPeminjaman: '2024-01-01' },
+        { buku: 'Buku 2', peminjam: 'Peminjam 2', tglPeminjaman: '2024-01-02' },
+      ],
       showAddForm: false,
+      showEditForm: false,
+      currentEditIndex: null,
       newData: {
         buku: '',
         peminjam: '',
-        tanggal_peminjaman: '',
-      },
+        tglPeminjaman: ''
+      }
     };
   },
   computed: {
     filteredData() {
-      if (!this.searchQuery) return this.dataPeminjaman;
-      return this.dataPeminjaman.filter(
-        (item) =>
-          item.buku.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          item.peminjam.toLowerCase().includes(this.searchQuery.toLowerCase())
+      return this.data.filter(item => 
+        item.buku.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        item.peminjam.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
     },
   },
   methods: {
-    fetchData() {
-      axios.get('http://localhost:8000/api/peminjaman').then((response) => {
-        this.dataPeminjaman = response.data;
-      });
+    editData(index) {
+      this.currentEditIndex = index;
+      this.newData = { ...this.data[index] };
+      this.showEditForm = true;
     },
-    searchData() {
-      this.filteredData;
+    deleteData(index) {
+      if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+        this.data.splice(index, 1);
+      }
     },
-    addData() {
-      axios.post('http://localhost:8000/api/peminjaman', this.newData).then(() => {
-        this.fetchData();
-        this.newData = { buku: '', peminjam: '', tanggal_peminjaman: '' };
-        this.showAddForm = false;
-      });
+    submitData() {
+      this.data.push({ ...this.newData });
+      this.resetForm();
     },
-    editData(item) {
-      // Add edit functionality
+    updateData() {
+      this.$set(this.data, this.currentEditIndex, { ...this.newData });
+      this.resetForm();
     },
-    deleteData(id) {
-      axios.delete(`http://localhost:8000/api/peminjaman/${id}`).then(() => {
-        this.fetchData();
-      });
+    cancelForm() {
+      this.resetForm();
     },
-  },
-  mounted() {
-    this.fetchData();
+    resetForm() {
+      this.newData = {
+        buku: '',
+        peminjam: '',
+        tglPeminjaman: ''
+      };
+      this.showAddForm = false;
+      this.showEditForm = false;
+      this.currentEditIndex = null;
+    }
   },
 };
 </script>
 
 <style>
-/* Tambahkan styling tambahan jika diperlukan */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f8f8f8;
+}
+.header {
+  background-color: #333;
+  color: white;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header .menu {
+  display: flex;
+  align-items: center;
+}
+.menu-icon {
+  background-color: white;
+  width: 20px;
+  height: 2px;
+  margin: 3px 0;
+}
+.tambah-button {
+  margin-right:50px;
+}
+.edit-button {
+  margin: 10px;
+}
+.hapus-button {
+  margin: 10px;
+}
+.content {
+  padding: 20px;
+}
+.table-container {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.table-container h1 {
+  text-align: center;
+  font-size: 1.5em;
+  margin-bottom: 20px;
+}
+.table-container .controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.table-container .controls button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.table-container .controls input {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+table th, table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+table th {
+  background-color: #f4f4f4;
+}
+.add-form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+.add-form h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.add-form form div {
+  margin-bottom: 10px;
+}
+.add-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+.add-form input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+.add-form .form-actions {
+  display: flex;
+  justify-content: space-between;
+}
+.add-form .form-actions button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.add-form .form-actions button:first-child {
+  background-color: #28a745;
+  color: white;
+}
+.add-form .form-actions button:last-child {
+  background-color: #dc3545;
+  color: white;
+}
 </style>
