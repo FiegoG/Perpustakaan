@@ -24,7 +24,22 @@ class PeminjamanService implements HasMiddleware
 
     public function getAll()
     {
-        return Peminjaman::with(['user', 'buku'])->get();
+        return Peminjaman::with('user', 'buku')
+        ->select([
+            'id', 
+            'id_user', 
+            'id_buku', 
+            'tgl_pinjam'
+        ])
+        ->get()
+        ->map(function ($peminjaman) {
+            return [
+                'id' => $peminjaman->id,
+                'buku' => $peminjaman->buku->judul, // Asumsikan ada kolom judul di tabel buku
+                'peminjam' => $peminjaman->user->name, // Asumsikan ada kolom name di tabel users
+                'tglPeminjaman' => $peminjaman->tgl_pinjam
+            ];
+        });
     }
 
     public function create(Request $request)

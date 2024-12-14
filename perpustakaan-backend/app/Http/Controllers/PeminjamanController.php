@@ -18,7 +18,13 @@ class PeminjamanController extends Controller
      */
     public function index()
     {
-        return response()->json($this->peminjamanService->getAll());
+        try {
+            return response()->json($this->peminjamanService->getAll());
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
