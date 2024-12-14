@@ -65,7 +65,8 @@
 </template>
 
 <script>
-import axios from "axios";
+import PeminjamanService from '@/services/Peminjaman';
+
 export default {
   data() {
     return {
@@ -93,15 +94,19 @@ export default {
     async fetchData() {
       try {
         const response = await PeminjamanService.getAll();
-        this.data = response.data;
+        this.data = response.data; // Pastikan struktur data benar
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     },
     async submitData() {
       try {
-        await PeminjamanService.create(this.newData);
-        this.fetchData(); // Refresh data setelah menambah
+        await PeminjamanService.create({
+          id_user: this.$store.state.user.id, // Ambil ID user dari store
+          id_buku: this.newData.buku, // Pastikan mengirim ID buku
+          tgl_pinjam: this.newData.tglPeminjaman
+        });
+        this.fetchData();
         this.resetForm();
       } catch (error) {
         console.error('Error adding data:', error);
@@ -110,8 +115,12 @@ export default {
     async updateData() {
       try {
         const id = this.data[this.currentEditIndex].id;
-        await PeminjamanService.update(id, this.newData);
-        this.fetchData(); // Refresh data setelah mengedit
+        await PeminjamanService.update(id, {
+          id_user: this.$store.state.user.id,
+          id_buku: this.newData.buku,
+          tgl_pinjam: this.newData.tglPeminjaman
+        });
+        this.fetchData();
         this.resetForm();
       } catch (error) {
         console.error('Error updating data:', error);
@@ -122,7 +131,7 @@ export default {
         try {
           const id = this.data[index].id;
           await PeminjamanService.delete(id);
-          this.fetchData(); // Refresh data setelah menghapus
+          this.fetchData();
         } catch (error) {
           console.error('Error deleting data:', error);
         }

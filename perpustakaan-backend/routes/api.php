@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PeminjamanController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,7 @@ Route::prefix('denda')->group(function () {
 });
 
 Route::prefix('peminjaman')->group(function () {
+    Route::get('/', [PeminjamanController::class, 'index']);
     Route::post('/', [PeminjamanService::class, 'create'])->middleware('auth:sanctum');
     Route::put('{id}', [PeminjamanService::class, 'update'])->middleware('auth:sanctum');
     Route::delete('{id}', [PeminjamanService::class, 'delete'])->middleware('auth:sanctum');

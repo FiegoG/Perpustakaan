@@ -22,6 +22,11 @@ class PeminjamanService implements HasMiddleware
         return Peminjaman::all();
     }
 
+    public function getAll()
+    {
+        return Peminjaman::with(['user', 'buku'])->get();
+    }
+
     public function create(Request $request)
     {
         $fields = $request->validate([
